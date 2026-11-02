@@ -53,6 +53,8 @@ export const sessions = sqliteTable(
     /** ISO yyyy-mm-dd. */
     date: text('date').notNull(),
     notes: text('notes'),
+    /** Peso corporal del día en kg (opcional, 0 < peso ≤ BODY_WEIGHT_MAX_KG). */
+    bodyWeightKg: real('body_weight_kg'),
     createdAt: text('created_at').notNull(),
   },
   (t) => [

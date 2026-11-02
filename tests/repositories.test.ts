@@ -46,6 +46,7 @@ function weightsSession(date: string, exerciseId: number): SessionInput {
   return {
     date,
     notes: null,
+    bodyWeightKg: null,
     logs: [{ exerciseId, durationMin: null, distanceKm: null, sets: [{ weightKg: 80, reps: 5 }, { weightKg: 85, reps: 3 }] }],
   };
 }
@@ -185,6 +186,7 @@ describe('sesiones', () => {
     const secondId = await saveSession(db.handle, userId, {
       date: '2026-01-05',
       notes: 'segunda visita',
+      bodyWeightKg: null,
       logs: [
         {
           exerciseId: bench.id,
@@ -204,6 +206,47 @@ describe('sesiones', () => {
     expect(session!.logs[0]!.sets[0]!.weightKg).toBe(90);
   });
 
+  it('guarda el peso corporal opcional y lo devuelve con la sesión', async () => {
+    const userId = await makeUser('ana@example.com');
+    const bench = await globalByLibraryId(userId, 'barbell-bench-press');
+
+    await saveSession(db.handle, userId, {
+      ...weightsSession('2026-01-15', bench.id),
+      bodyWeightKg: 82.5,
+    });
+
+    const session = await getSessionByDate(db.handle, userId, '2026-01-15');
+    expect(session!.bodyWeightKg).toBe(82.5);
+
+    const details = await listSessionDetails(db.handle, userId);
+    expect(details[0]!.bodyWeightKg).toBe(82.5);
+
+    await saveSession(db.handle, userId, weightsSession('2026-01-16', bench.id));
+    const withoutWeight = await getSessionByDate(db.handle, userId, '2026-01-16');
+    expect(withoutWeight!.bodyWeightKg).toBeNull();
+  });
+
+  it('rechaza pesos corporales fuera de rango', async () => {
+    const userId = await makeUser('ana@example.com');
+    const bench = await globalByLibraryId(userId, 'barbell-bench-press');
+
+    for (const bodyWeightKg of [0, -5, 300.1, Number.POSITIVE_INFINITY, Number.NaN]) {
+      await expect(
+        saveSession(db.handle, userId, {
+          ...weightsSession('2026-01-17', bench.id),
+          bodyWeightKg,
+        }),
+      ).rejects.toThrow(ERROR_KEYS.sessions.invalidBodyWeight);
+    }
+
+    await saveSession(db.handle, userId, {
+      ...weightsSession('2026-01-17', bench.id),
+      bodyWeightKg: 300,
+    });
+    const session = await getSessionByDate(db.handle, userId, '2026-01-17');
+    expect(session!.bodyWeightKg).toBe(300);
+  });
+
   it('valida cardio (duración obligatoria, sin series)', async () => {
     const userId = await makeUser('ana@example.com');
     const cardio = (await listAllExercisesForUser(db.handle, userId)).find(
@@ -214,6 +257,7 @@ describe('sesiones', () => {
       saveSession(db.handle, userId, {
         date: '2026-01-07',
         notes: null,
+        bodyWeightKg: null,
         logs: [{ exerciseId: cardio.id, durationMin: null, distanceKm: null, sets: [] }],
       }),
     ).rejects.toThrow(ERROR_KEYS.sessions.cardioNeedsDuration);
@@ -222,6 +266,7 @@ describe('sesiones', () => {
       saveSession(db.handle, userId, {
         date: '2026-01-07',
         notes: null,
+        bodyWeightKg: null,
         logs: [
           {
             exerciseId: cardio.id,
@@ -236,6 +281,7 @@ describe('sesiones', () => {
     await saveSession(db.handle, userId, {
       date: '2026-01-07',
       notes: null,
+      bodyWeightKg: null,
       logs: [{ exerciseId: cardio.id, durationMin: 30, distanceKm: 5.2, sets: [] }],
     });
 
@@ -252,6 +298,7 @@ describe('sesiones', () => {
       saveSession(db.handle, userId, {
         date: '2026-01-08',
         notes: null,
+        bodyWeightKg: null,
         logs: [{ exerciseId: bench.id, durationMin: null, distanceKm: null, sets: [] }],
       }),
     ).rejects.toThrow(ERROR_KEYS.sessions.weightsNeedSet);
@@ -260,6 +307,7 @@ describe('sesiones', () => {
       saveSession(db.handle, userId, {
         date: '2026-01-08',
         notes: null,
+        bodyWeightKg: null,
         logs: [
           {
             exerciseId: bench.id,
@@ -317,6 +365,7 @@ describe('export / import', () => {
     await saveSession(db.handle, ana, {
       date: '2026-02-01',
       notes: 'buen día',
+      bodyWeightKg: 82.5,
       logs: [
         { exerciseId: bench.id, durationMin: null, distanceKm: null, sets: [{ weightKg: 100, reps: 3 }] },
         { exerciseId: own.id, durationMin: null, distanceKm: null, sets: [{ weightKg: 120, reps: 8 }] },
@@ -324,13 +373,16 @@ describe('export / import', () => {
     });
 
     const backup = await exportUserData(db.handle, ana);
+    expect(backup.version).toBe(3);
     expect(backup.sessions).toHaveLength(1);
+    expect(backup.sessions[0]!.bodyWeightKg).toBe(82.5);
     expect(backup.user.email).toBe('ana@example.com');
 
     await importUserData(db.handle, luis, backup);
 
     const imported = await getSessionByDate(db.handle, luis, '2026-02-01');
     expect(imported).not.toBeNull();
+    expect(imported!.bodyWeightKg).toBe(82.5);
     expect(imported!.logs).toHaveLength(2);
     expect(imported!.logs.map((log) => log.exerciseName).sort()).toEqual(
       ['Mi máquina', 'Press banca con barra'].sort(),

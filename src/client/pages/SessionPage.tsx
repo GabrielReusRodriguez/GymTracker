@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { Exercise } from '../../db/schema';
-import type { SetEntry, TemplateInput, TemplateItemPrefill } from '../../shared/types';
+import {
+  BODY_WEIGHT_MAX_KG,
+  type SetEntry,
+  type TemplateInput,
+  type TemplateItemPrefill,
+} from '../../shared/types';
 import type { LibraryExercise } from '../../library/types';
 import { getLibraryExercise } from '../../library';
 import { getSessionByDate, saveSession } from '../../db/repositories/sessions';
@@ -93,6 +98,7 @@ export function SessionPage() {
 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [notes, setNotes] = useState('');
+  const [bodyWeight, setBodyWeight] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
@@ -125,6 +131,11 @@ export function SessionPage() {
       })),
     );
     setNotes(session.data?.notes ?? '');
+    setBodyWeight(
+      session.data?.bodyWeightKg === null || session.data?.bodyWeightKg === undefined
+        ? ''
+        : String(session.data.bodyWeightKg),
+    );
     setError(null);
   }, [date, session.data, session.loading]);
 
@@ -265,6 +276,7 @@ export function SessionPage() {
       await saveSession(handle, user!.id, {
         date,
         notes: notes.trim() || null,
+        bodyWeightKg: parseNullableNumber(bodyWeight),
         logs: drafts.map((draft) => ({
           exerciseId: draft.exerciseId,
           durationMin: draft.type === 'cardio' ? parseNullableNumber(draft.duration) : null,
@@ -320,6 +332,23 @@ export function SessionPage() {
             value={notes}
             onChange={(event) => {
               setNotes(event.target.value);
+              setSuccess(null);
+            }}
+          />
+        </div>
+        <div className="field" style={{ marginTop: 12, maxWidth: 220 }}>
+          <label htmlFor="body-weight">{t('session.bodyWeight')}</label>
+          <input
+            id="body-weight"
+            className="input mono"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={BODY_WEIGHT_MAX_KG}
+            step="0.1"
+            value={bodyWeight}
+            onChange={(event) => {
+              setBodyWeight(event.target.value);
               setSuccess(null);
             }}
           />

@@ -11,7 +11,7 @@ import {
 import type { SessionDetail } from '../src/shared/types';
 
 function session(date: string, logs: SessionDetail['logs']): SessionDetail {
-  return { id: 1, date, notes: null, logs };
+  return { id: 1, date, notes: null, bodyWeightKg: null, logs };
 }
 
 const benchLog = (date = '2026-01-05'): SessionDetail =>
