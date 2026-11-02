@@ -6,7 +6,13 @@ import type { LibraryExercise } from '../../library/types';
 import { getLibraryExercise } from '../../library';
 import { getSessionByDate, saveSession } from '../../db/repositories/sessions';
 import { listVisibleExercises } from '../../db/repositories/exercises';
-import { applyTemplate, createTemplate, listTemplates } from '../../db/repositories/templates';
+import {
+  applyTemplate,
+  createTemplate,
+  getLastEntriesByExercise,
+  listTemplates,
+  type LastEntry,
+} from '../../db/repositories/templates';
 import { useAuth } from '../hooks/useAuth';
 import { useDbHandle } from '../hooks/useDb';
 import { useAsync } from '../hooks/useAsync';
@@ -67,6 +73,20 @@ export function SessionPage() {
   const session = useAsync(
     () => getSessionByDate(handle, user!.id, date),
     [handle, user!.id, date],
+  );
+
+  // Placeholders de peso/reps: último registro anterior a la fecha editada.
+  const lastEntries = useAsync(
+    () =>
+      catalog.data
+        ? getLastEntriesByExercise(
+            handle,
+            user!.id,
+            catalog.data.map((exercise) => exercise.id),
+            { excludeDate: date },
+          )
+        : Promise.resolve(new Map<number, LastEntry>()),
+    [handle, user!.id, date, catalog.data],
   );
 
   const templates = useAsync(() => listTemplates(handle, user!.id), [handle, user!.id]);
@@ -394,6 +414,7 @@ export function SessionPage() {
                 <SeriesEditor
                   key={draft.key}
                   sets={draft.sets}
+                  lastSets={lastEntries.data?.get(draft.exerciseId)?.sets ?? null}
                   onChange={(sets) => updateDraft(draft.key, { sets })}
                 />
               )}

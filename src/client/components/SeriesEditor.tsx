@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { SetEntry } from '../../shared/types';
+import { placeholderForRow } from '../../shared/prefill';
 import { useI18n } from '../i18n';
 import { IconPlus, IconTrash } from './Icons';
 
@@ -25,10 +26,12 @@ function parseNumber(value: string): number | null {
 
 interface Props {
   sets: SetEntry[];
+  /** Último registro del ejercicio: alimenta los placeholders sombreados. */
+  lastSets?: SetEntry[] | null;
   onChange: (sets: SetEntry[]) => void;
 }
 
-export function SeriesEditor({ sets, onChange }: Props) {
+export function SeriesEditor({ sets, lastSets, onChange }: Props) {
   const { t } = useI18n();
   const [rows, setRows] = useState<RawSet[]>(() => toRaw(sets));
 
@@ -58,41 +61,44 @@ export function SeriesEditor({ sets, onChange }: Props) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={index}>
-              <td className="set-index">{index + 1}</td>
-              <td>
-                <input
-                  className="set-input"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={row.weight}
-                  onChange={(event) => update(index, 'weight', event.target.value)}
-                  aria-label={t('series.weightAria', { index: index + 1 })}
-                />
-              </td>
-              <td>
-                <input
-                  className="set-input"
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={row.reps}
-                  onChange={(event) => update(index, 'reps', event.target.value)}
-                  aria-label={t('series.repsAria', { index: index + 1 })}
-                />
-              </td>
-              <td>
-                <button
-                  className="btn btn-ghost btn-icon"
-                  onClick={() => commit(rows.filter((_, rowIndex) => rowIndex !== index))}
-                  disabled={rows.length === 1}
-                  aria-label={t('series.removeAria')}
-                >
-                  <IconTrash width={15} height={15} />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {rows.map((row, index) => {
+            const previous = placeholderForRow(lastSets, index);
+            return (
+              <tr key={index}>
+                <td className="set-index">{index + 1}</td>
+                <td>
+                  <input
+                    className="set-input"
+                    inputMode="decimal"
+                    placeholder={previous && previous.weightKg !== null ? String(previous.weightKg) : '0'}
+                    value={row.weight}
+                    onChange={(event) => update(index, 'weight', event.target.value)}
+                    aria-label={t('series.weightAria', { index: index + 1 })}
+                  />
+                </td>
+                <td>
+                  <input
+                    className="set-input"
+                    inputMode="numeric"
+                    placeholder={previous && previous.reps !== null ? String(previous.reps) : '0'}
+                    value={row.reps}
+                    onChange={(event) => update(index, 'reps', event.target.value)}
+                    aria-label={t('series.repsAria', { index: index + 1 })}
+                  />
+                </td>
+                <td>
+                  <button
+                    className="btn btn-ghost btn-icon"
+                    onClick={() => commit(rows.filter((_, rowIndex) => rowIndex !== index))}
+                    disabled={rows.length === 1}
+                    aria-label={t('series.removeAria')}
+                  >
+                    <IconTrash width={15} height={15} />
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
