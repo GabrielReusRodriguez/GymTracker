@@ -41,6 +41,7 @@ describe('getLastEntriesByExercise', () => {
       await saveSession(db.handle, userId, {
         date,
         notes: null,
+        bodyWeightKg: null,
         logs: [
           {
             exerciseId: press.id,
@@ -72,6 +73,7 @@ describe('getLastEntriesByExercise', () => {
     await saveSession(db.handle, userId, {
       date: '2026-01-05',
       notes: null,
+      bodyWeightKg: null,
       logs: [
         {
           exerciseId: press.id,
@@ -84,6 +86,7 @@ describe('getLastEntriesByExercise', () => {
     await saveSession(db.handle, otherId, {
       date: '2026-02-01',
       notes: null,
+      bodyWeightKg: null,
       logs: [
         {
           exerciseId: press.id,

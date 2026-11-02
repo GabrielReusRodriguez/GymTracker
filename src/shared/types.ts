@@ -2,6 +2,9 @@ import type { Muscle } from '../library/types';
 
 export type ExerciseType = 'cardio' | 'weights';
 
+/** Tope del peso corporal registrable en una sesión (kg). */
+export const BODY_WEIGHT_MAX_KG = 300;
+
 /** Fila de serie tal como la maneja la UI. */
 export interface SetEntry {
   weightKg: number | null;
@@ -30,6 +33,7 @@ export interface SessionDetail {
   id: number;
   date: string;
   notes: string | null;
+  bodyWeightKg: number | null;
   logs: LogDetail[];
 }
 
@@ -37,6 +41,7 @@ export interface SessionSummary {
   id: number;
   date: string;
   notes: string | null;
+  bodyWeightKg: number | null;
   exerciseCount: number;
   totalMinutes: number;
 }
@@ -52,6 +57,7 @@ export interface SessionLogInput {
 export interface SessionInput {
   date: string;
   notes: string | null;
+  bodyWeightKg: number | null;
   logs: SessionLogInput[];
 }
 
@@ -151,6 +157,7 @@ export interface BackupLog {
 export interface BackupSession {
   date: string;
   notes: string | null;
+  bodyWeightKg: number | null;
   logs: BackupLog[];
 }
 
@@ -171,8 +178,8 @@ export interface BackupTemplate {
 
 export interface BackupFile {
   format: 'gym-tracker';
-  /** v1 no tenía plantillas; se acepta al importar. */
-  version: 1 | 2;
+  /** v1 no tenía plantillas; v2 no tenía peso corporal; se aceptan al importar. */
+  version: 1 | 2 | 3;
   exportedAt: string;
   user: { email: string; name: string };
   exercises: BackupExercise[];

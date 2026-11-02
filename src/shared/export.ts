@@ -75,7 +75,7 @@ function parseLog(value: unknown, index: number): BackupLog {
 
 function parseSession(value: unknown, index: number): BackupSession {
   if (!isObject(value)) fail(ERROR_KEYS.backup.sessionNotObject, { index: index + 1 });
-  const { date, notes, logs } = value as Record<string, unknown>;
+  const { date, notes, bodyWeightKg, logs } = value as Record<string, unknown>;
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     fail(ERROR_KEYS.backup.sessionBadDate, { index: index + 1 });
   }
@@ -83,6 +83,7 @@ function parseSession(value: unknown, index: number): BackupSession {
   return {
     date,
     notes: typeof notes === 'string' ? notes : null,
+    bodyWeightKg: isNumberOrNull(bodyWeightKg) ? bodyWeightKg : null,
     logs: logs.map(parseLog),
   };
 }
@@ -131,7 +132,7 @@ export function parseBackup(raw: string): BackupFile {
   }
   if (!isObject(data)) fail(ERROR_KEYS.backup.notObject);
   if (data.format !== 'gym-tracker') fail(ERROR_KEYS.backup.notGymTracker);
-  if (data.version !== 1 && data.version !== 2) {
+  if (data.version !== 1 && data.version !== 2 && data.version !== 3) {
     fail(ERROR_KEYS.backup.unsupportedVersion, { version: String(data.version) });
   }
   if (!Array.isArray(data.exercises)) fail(ERROR_KEYS.backup.noExercises);

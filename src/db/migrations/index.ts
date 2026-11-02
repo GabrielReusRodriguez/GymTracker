@@ -89,6 +89,10 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX template_items_exercise_idx ON template_items(exercise_id)`,
     ],
   },
+  {
+    version: 3,
+    statements: [`ALTER TABLE sessions ADD COLUMN body_weight_kg REAL`],
+  },
 ];
 
 export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;

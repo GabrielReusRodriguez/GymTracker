@@ -64,6 +64,7 @@ export const ERROR_KEYS = {
     setNeedsData: 'error.sessions.setNeedsData',
     invalidWeight: 'error.sessions.invalidWeight',
     invalidReps: 'error.sessions.invalidReps',
+    invalidBodyWeight: 'error.sessions.invalidBodyWeight',
     notFound: 'error.sessions.notFound',
   },
   templates: {

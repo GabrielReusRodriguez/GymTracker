@@ -2,12 +2,13 @@ import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { withTransaction, type DbHandle } from '..';
 import type { Exercise, Session } from '../schema';
 import { exerciseLogs, exercises, series, sessions } from '../schema';
-import type {
-  LogDetail,
-  SessionDetail,
-  SessionInput,
-  SessionLogInput,
-  SessionSummary,
+import {
+  BODY_WEIGHT_MAX_KG,
+  type LogDetail,
+  type SessionDetail,
+  type SessionInput,
+  type SessionLogInput,
+  type SessionSummary,
 } from '../../shared/types';
 import { exerciseTypesById } from './exercises';
 import { ERROR_KEYS } from '../../shared/errors';
@@ -17,6 +18,15 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function assertDate(date: string): void {
   if (!DATE_RE.test(date)) throw new ValidationError(ERROR_KEYS.sessions.invalidDate);
+}
+
+function assertBodyWeight(value: number | null): void {
+  if (value === null) return;
+  if (!Number.isFinite(value) || value <= 0 || value > BODY_WEIGHT_MAX_KG) {
+    throw new ValidationError(ERROR_KEYS.sessions.invalidBodyWeight, {
+      max: BODY_WEIGHT_MAX_KG,
+    });
+  }
 }
 
 function validateLogs(logs: SessionLogInput[], exerciseMap: Map<number, Exercise>): void {
@@ -89,6 +99,7 @@ export async function validateSessionInput(
   input: SessionInput,
 ): Promise<void> {
   assertDate(input.date);
+  assertBodyWeight(input.bodyWeightKg);
 
   const uniqueIds = [...new Set(input.logs.map((log) => log.exerciseId))];
   const exerciseMap = await exerciseTypesById(h, uniqueIds);
@@ -126,7 +137,7 @@ export async function writeSession(
     sessionId = existing[0].id;
     await h.db
       .update(sessions)
-      .set({ notes: input.notes?.trim() || null })
+      .set({ notes: input.notes?.trim() || null, bodyWeightKg: input.bodyWeightKg })
       .where(eq(sessions.id, sessionId));
     await clearSessionLogs(h, sessionId);
   } else {
@@ -136,6 +147,7 @@ export async function writeSession(
         userId,
         date: input.date,
         notes: input.notes?.trim() || null,
+        bodyWeightKg: input.bodyWeightKg,
         createdAt: new Date().toISOString(),
       })
       .returning({ id: sessions.id });
@@ -219,6 +231,7 @@ export async function listSessions(
       id: row.id,
       date: row.date,
       notes: row.notes,
+      bodyWeightKg: row.bodyWeightKg,
       exerciseCount: stats.count,
       totalMinutes: Math.round(stats.minutes * 10) / 10,
     };
@@ -304,6 +317,7 @@ export async function listSessionDetails(
     id: row.id,
     date: row.date,
     notes: row.notes,
+    bodyWeightKg: row.bodyWeightKg,
     logs: logsBySession.get(row.id) ?? [],
   }));
 }

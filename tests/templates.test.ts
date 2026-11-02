@@ -228,6 +228,7 @@ describe('plantillas', () => {
     await saveSession(db.handle, userId, {
       date: '2026-03-02',
       notes: null,
+      bodyWeightKg: null,
       logs: [
         {
           exerciseId: press.id,
@@ -265,6 +266,7 @@ describe('plantillas', () => {
     await saveSession(db.handle, userId, {
       date: '2026-01-05',
       notes: null,
+      bodyWeightKg: null,
       logs: [
         { exerciseId: press.id, durationMin: null, distanceKm: null, sets: [{ weightKg: 70, reps: 8 }] },
       ],
@@ -272,6 +274,7 @@ describe('plantillas', () => {
     await saveSession(db.handle, userId, {
       date: '2026-02-10',
       notes: null,
+      bodyWeightKg: null,
       logs: [
         { exerciseId: press.id, durationMin: null, distanceKm: null, sets: [{ weightKg: 90, reps: 2 }] },
       ],
@@ -317,7 +320,7 @@ describe('plantillas', () => {
     expect(templateId).toBeGreaterThan(0);
 
     const backup = await exportUserData(db.handle, userId);
-    expect(backup.version).toBe(2);
+    expect(backup.version).toBe(3);
     expect(backup.templates).toHaveLength(1);
     expect(backup.templates?.[0]?.items[0]).toMatchObject({
       exercise: press.name,

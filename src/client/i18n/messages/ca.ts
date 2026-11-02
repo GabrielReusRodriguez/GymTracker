@@ -96,6 +96,7 @@ export const ca: Dictionary = {
     goToday: 'Ves a avui',
     notes: 'Notes de la sessió (opcional)',
     notesPlaceholder: 'Sensacions, energia, molèsties…',
+    bodyWeight: 'Pes corporal (kg, opcional)',
     emptyTitle: 'Encara no hi ha exercicis',
     emptyBody: 'Afegeix cardio (minuts) i peses (pes × reps per sèrie).',
     viewTechnique: 'Veure tècnica',
@@ -155,6 +156,7 @@ export const ca: Dictionary = {
     emptyBody: "Comença registrant l'entrenament d'avui.",
     goToday: "Ves a la sessió d'avui",
     deleteConfirm: 'Vols esborrar la sessió del {date}?',
+    bodyWeight: 'Pes corporal',
   },
 
   range: {
@@ -324,6 +326,7 @@ export const ca: Dictionary = {
   'error.sessions.setNeedsData': '"{name}": cada sèrie necessita pes o repeticions.',
   'error.sessions.invalidWeight': '"{name}": pes invàlid.',
   'error.sessions.invalidReps': '"{name}": les repeticions han de ser un enter positiu.',
+  'error.sessions.invalidBodyWeight': 'Pes corporal invàlid: ha de ser més gran que 0 i com a màxim {max} kg.',
   'error.sessions.notFound': 'Sessió no trobada.',
 
   'error.templates.exerciseUnavailable': 'Hi ha un exercici que no existeix o no és teu.',

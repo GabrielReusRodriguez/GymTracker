@@ -98,6 +98,7 @@ export const es = {
     goToday: 'Ir a hoy',
     notes: 'Notas de la sesión (opcional)',
     notesPlaceholder: 'Sensaciones, energía, molestias…',
+    bodyWeight: 'Peso corporal (kg, opcional)',
     emptyTitle: 'Todavía no hay ejercicios',
     emptyBody: 'Añade cardio (minutos) y pesas (peso × reps por serie).',
     viewTechnique: 'Ver técnica',
@@ -158,6 +159,7 @@ export const es = {
     emptyBody: 'Empieza registrando el entrenamiento de hoy.',
     goToday: 'Ir a la sesión de hoy',
     deleteConfirm: '¿Borrar la sesión del {date}?',
+    bodyWeight: 'Peso corporal',
   },
 
   range: {
@@ -327,6 +329,7 @@ export const es = {
   'error.sessions.setNeedsData': '"{name}": cada serie necesita peso o repeticiones.',
   'error.sessions.invalidWeight': '"{name}": peso inválido.',
   'error.sessions.invalidReps': '"{name}": las repeticiones deben ser un entero positivo.',
+  'error.sessions.invalidBodyWeight': 'Peso corporal inválido: debe ser mayor que 0 y como máximo {max} kg.',
   'error.sessions.notFound': 'Sesión no encontrada.',
 
   'error.templates.exerciseUnavailable': 'Hay un ejercicio que no existe o no es tuyo.',

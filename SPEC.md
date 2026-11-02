@@ -1,6 +1,6 @@
 # Gym Tracker — Especificación técnica
 
-**Versión:** 2.5 · **Fecha:** 2026-10-30 · **Estado:** implementada (fases 1–10 en `main`); reordenar ejercicios arrastrando (fase 11) validada en la rama `feat/reordenar-ejercicios-arrastrando`, pendiente de merge
+**Versión:** 2.6 · **Fecha:** 2026-11-02 · **Estado:** implementada (fases 1–10 en `main`); reordenar ejercicios arrastrando (fase 11) validada en la rama `feat/reordenar-ejercicios-arrastrando`, pendiente de merge; peso corporal opcional por sesión (fase 12) implementada
 
 Aplicación web para registrar entrenamientos de gimnasio: por cada día de entrenamiento se guarda la duración de cada ejercicio de cardio y el peso y las repeticiones (por series) de cada ejercicio de pesas. Desplegada en Cloudflare, con persistencia local en el navegador mediante SQLite WASM + OPFS y multiusuario mediante cuentas locales con contraseña.
 
@@ -76,6 +76,7 @@ sessions(
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date TEXT NOT NULL,                -- ISO yyyy-mm-dd, una sesión por día
   notes TEXT,
+  body_weight_kg REAL NULL,          -- peso corporal del día (opcional)
   created_at TEXT NOT NULL,
   UNIQUE(user_id, date)
 );
@@ -124,6 +125,7 @@ template_items(
 - Log de **cardio**: `type` es `cardio` ⇒ `duration_min` obligatorio, `distance_km` opcional, sin series asociadas.
 - Todo acceso a datos filtra por el `user_id` de la sesión activa (véase sección 5).
 - Una sesión por `(user_id, date)`: si el usuario va dos veces el mismo día, edita la misma sesión.
+- **Peso corporal**: `sessions.body_weight_kg` es opcional (`NULL` = no registrado). Si se indica, debe ser finito y cumplir `0 < peso ≤ 300` kg; el repositorio lanza `error.sessions.invalidBodyWeight` en caso contrario.
 - Borrado de un ejercicio del catálogo global solo si ningún log lo usa; si está en uso, soft-hide.
 - `muscle_group` referencia el enum `Muscle` de la biblioteca (sección 6), no texto libre.
 - **Plantillas**: `series_count` solo en items de pesas (≥1) y `duration_min`/`distance_km` solo en items de cardio; un ejercicio no se repite dentro de la misma plantilla y el nombre es único por usuario. Aplicar una plantilla **no escribe en `sessions`**: solo rellena el borrador de la pantalla de sesión, así que la validación de logs sigue siendo la única puerta de guardado. Una plantilla que referencia un ejercicio cuenta como uso: ese ejercicio se oculta, no se borra.
@@ -211,11 +213,12 @@ El enum `Muscle` es el mismo vocabulario del campo `muscle_group` de `exercises`
 2. **Sesión de hoy / editar sesión** — añadir ejercicios del catálogo (buscador, filtrable por tipo y grupo muscular); cada log renderiza su formulario según tipo:
    - Cardio: minutos + distancia opcional.
    - Pesas: filas de series (peso × reps) con botones añadir/quitar serie. Al añadir un ejercicio, cada fila muestra como placeholder (sombreado) la serie correspondiente de la última sesión **anterior** a la fecha editada, repitiendo la última si esa vez hubo menos series; sin historial muestra `0`. El placeholder no se persiste: si no se escribe nada, la serie sigue vacía y la validación no cambia.
+   - **Peso corporal opcional**: campo numérico (kg) junto a las notas, con tope de 300 kg. Vacío = no se registra. Se guarda en `sessions.body_weight_kg` de esa fecha.
    - Icono ℹ️ por ejercicio → ficha de la biblioteca en drawer.
    - **Reordenar ejercicios**: arrastrando la tarjeta desde el asa (pointer events, ratón y táctil) o con los botones ↑/↓. El orden se guarda en `exercise_logs.order` al guardar la sesión.
    - **Cargar plantilla** (modal con las plantillas del usuario) y **guardar como plantilla** (captura los ejercicios y series actuales).
 3. **Plantillas** — CRUD de plantillas de sesión: crear desde cero, editar, duplicar, reordenar items y borrar. Los items se reordenan arrastrando la tarjeta desde el asa o con los botones ↑/↓; el orden se persiste en `template_items.order`. Cada item guarda el número de series (pesas) o la duración/distancia (cardio) como preset. «Aplicar a hoy» navega a `/session?template=<id>`.
-4. **Histórico** — lista por fecha descendente, expandible, editar/borrar.
+4. **Histórico** — lista por fecha descendente, expandible, editar/borrar. El resumen de cada sesión muestra el peso corporal cuando se registró.
 5. **Catálogo** — CRUD de ejercicios propios; los globales no se borran (soft-hide).
 6. **Biblioteca** — buscador + detalle (sección 6).
 7. **Estadísticas** — véase sección 8.
@@ -273,8 +276,8 @@ export default { fetch: app.fetch };
 
 ## 10. Export / import
 
-- **Export JSON**: descarga un archivo con toda la BD del perfil activo (ejercicios, sesiones, logs, series y plantillas). Obligatorio y visible en Ajustes: es la única copia de seguridad posible al ser datos locales.
-- **Import JSON**: restaura datos, con resolución "reemplazar perfil" en v1 (sin merge). Acepta `version: 1` (sin plantillas) y `version: 2`; los items de plantilla se resuelven por nombre de ejercicio, igual que los logs.
+- **Export JSON**: descarga un archivo con toda la BD del perfil activo (ejercicios, sesiones, logs, series y plantillas), en `version: 3`. Obligatorio y visible en Ajustes: es la única copia de seguridad posible al ser datos locales.
+- **Import JSON**: restaura datos, con resolución "reemplazar perfil" en v1 (sin merge). Acepta `version: 1` (sin plantillas), `version: 2` y `version: 3` (con peso corporal por sesión; en las versiones anteriores el campo se interpreta como `null`); los items de plantilla se resuelven por nombre de ejercicio, igual que los logs.
 
 ---
 
@@ -390,5 +393,6 @@ gym/
 9. **Idioma de la interfaz**: castellano y catalán, preferencia por perfil en `localStorage`, entrada forzada con el parámetro de URL `?lang=es|ca`, diccionarios tipados, errores de dominio traducibles y biblioteca bilingüe.
 10. **Diseño responsive**: adaptar todas las pantallas al rango 320 px–escritorio según la sección 12, con navegación inferior en móvil, formularios táctiles, tablas y gráficas adaptables y revisión en los anchos de la sección 12.2.
 11. **Reordenar ejercicios arrastrando**: asa de arrastre con pointer events en las tarjetas de la sesión y del editor de plantillas, con botones ↑/↓ como alternativa de teclado; el orden se persiste en `exercise_logs.order` y `template_items.order` sin cambios de esquema.
+12. **Peso corporal por sesión**: campo opcional `sessions.body_weight_kg` (0 < peso ≤ 300 kg), entrada en la pantalla de sesión, visualización en el histórico y round-trip en el export/import (`version: 3`). Las estadísticas con el peso corporal quedan fuera de alcance.
 
 Cada fase debe dejar la app desplegable y usable; la 2 y la 3 son prerrequisito de todo lo demás.

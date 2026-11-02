@@ -34,7 +34,7 @@ function sessionTotals(session: SessionDetail) {
 export function HistoryPage() {
   const { user } = useAuth();
   const handle = useDbHandle();
-  const { t, tError, dateLong, number, plural } = useI18n();
+  const { t, tError, dateLong, number, plural, weight } = useI18n();
   const [range, setRange] = useState<'30' | '90' | 'all'>('90');
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState<number | null>(null);
@@ -132,6 +132,11 @@ export function HistoryPage() {
                   <span className="session-date">{session.date === todayISO() ? t('common.today') : dateLong(session.date)}</span>
                   <span className="row small muted" style={{ gap: 14 }}>
                     <span>{plural(session.logs.length, t('common.exercise'), t('common.exercises'))}</span>
+                    {session.bodyWeightKg !== null ? (
+                      <span className="mono" title={t('history.bodyWeight')}>
+                        {weight(session.bodyWeightKg)}
+                      </span>
+                    ) : null}
                     {totals.volume > 0 ? <span className="mono">{number(totals.volume)} kg</span> : null}
                     {totals.minutes > 0 ? <span className="mono">{totals.minutes} min</span> : null}
                     {totals.distance > 0 ? <span className="mono">{totals.distance} km</span> : null}

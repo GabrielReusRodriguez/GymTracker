@@ -35,7 +35,7 @@ export async function exportUserData(h: DbHandle, userId: number): Promise<Backu
 
   return {
     format: 'gym-tracker',
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     user: { email: user.email, name: user.name },
     exercises: [...byId.values()].map((row) => ({
@@ -48,6 +48,7 @@ export async function exportUserData(h: DbHandle, userId: number): Promise<Backu
     sessions: details.map((session) => ({
       date: session.date,
       notes: session.notes,
+      bodyWeightKg: session.bodyWeightKg,
       logs: session.logs.map((log) => ({
         exercise: log.exerciseName,
         durationMin: log.durationMin,
@@ -155,6 +156,7 @@ export async function importUserData(
       const input: SessionInput = {
         date: session.date,
         notes: session.notes,
+        bodyWeightKg: session.bodyWeightKg,
         logs: session.logs.map((log) => {
           const exerciseId = idByName.get(normalize(log.exercise));
           if (!exerciseId) {
