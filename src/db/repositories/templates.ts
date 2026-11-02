@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, lt } from 'drizzle-orm';
 import { withTransaction, type DbHandle } from '..';
 import type { Exercise } from '../schema';
 import { exerciseLogs, exercises, series, sessions, templateItems, templates } from '../schema';
@@ -350,14 +350,20 @@ export interface LastEntry {
 /**
  * Último registro de cada ejercicio (sesión más reciente del usuario). Es lo
  * que prellena la plantilla al aplicarla: el usuario solo ajusta los números.
+ * `excludeDate` limita la búsqueda a fechas estrictamente anteriores (la
+ * pantalla de sesión lo usa para no proponer la sesión que está editando).
  */
 export async function getLastEntriesByExercise(
   h: DbHandle,
   userId: number,
   exerciseIds: number[],
+  options: { excludeDate?: string } = {},
 ): Promise<Map<number, LastEntry>> {
   const result = new Map<number, LastEntry>();
   if (exerciseIds.length === 0) return result;
+
+  const conditions = [eq(sessions.userId, userId), inArray(exerciseLogs.exerciseId, exerciseIds)];
+  if (options.excludeDate) conditions.push(lt(sessions.date, options.excludeDate));
 
   const logRows = await h.db
     .select({
@@ -369,7 +375,7 @@ export async function getLastEntriesByExercise(
     })
     .from(exerciseLogs)
     .innerJoin(sessions, eq(exerciseLogs.sessionId, sessions.id))
-    .where(and(eq(sessions.userId, userId), inArray(exerciseLogs.exerciseId, exerciseIds)))
+    .where(and(...conditions))
     .orderBy(desc(sessions.date), asc(exerciseLogs.order));
 
   const chosen = new Map<number, (typeof logRows)[number]>();

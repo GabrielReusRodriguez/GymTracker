@@ -210,7 +210,7 @@ El enum `Muscle` es el mismo vocabulario del campo `muscle_group` de `exercises`
 1. **Login / registro** — contra la BD local; cambiar password incluido.
 2. **Sesión de hoy / editar sesión** — añadir ejercicios del catálogo (buscador, filtrable por tipo y grupo muscular); cada log renderiza su formulario según tipo:
    - Cardio: minutos + distancia opcional.
-   - Pesas: filas de series (peso × reps) con botones añadir/quitar serie.
+   - Pesas: filas de series (peso × reps) con botones añadir/quitar serie. Al añadir un ejercicio, cada fila muestra como placeholder (sombreado) la serie correspondiente de la última sesión **anterior** a la fecha editada, repitiendo la última si esa vez hubo menos series; sin historial muestra `0`. El placeholder no se persiste: si no se escribe nada, la serie sigue vacía y la validación no cambia.
    - Icono ℹ️ por ejercicio → ficha de la biblioteca en drawer.
    - **Reordenar ejercicios**: arrastrando la tarjeta desde el asa (pointer events, ratón y táctil) o con los botones ↑/↓. El orden se guarda en `exercise_logs.order` al guardar la sesión.
    - **Cargar plantilla** (modal con las plantillas del usuario) y **guardar como plantilla** (captura los ejercicios y series actuales).
